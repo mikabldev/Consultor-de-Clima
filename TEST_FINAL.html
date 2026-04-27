@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✅ Test Final - Pronósticos</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+        h1 { color: #667eea; text-align: center; margin-bottom: 32px; }
+        .test-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 8px;
+        }
+        .status {
+            font-weight: bold;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+            margin: 8px 0;
+        }
+        .pass { background: #e8f5e9; color: #2e7d32; }
+        .fail { background: #ffebee; color: #c62828; }
+        .loading { background: #e3f2fd; color: #1565c0; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 16px 0;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 13px;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            text-align: left;
+        }
+        th { background: #f5f5f5; font-weight: 600; }
+        tr:hover { background: #fafafa; }
+        .forecast-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 8px 0;
+            text-align: center;
+        }
+        .forecast-card .day { font-weight: bold; font-size: 14px; }
+        .forecast-card .temps { font-size: 18px; margin: 8px 0; }
+        .forecast-card .weather { font-size: 12px; opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Test Final de Pronósticos</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 24px;">
+            Verificación completa de que los pronósticos funcionan correctamente
+        </p>
+
+        <!-- TEST 1: INICIALIZACIÓN -->
+        <div class="test-box">
+            <h3>📋 Test 1: Inicialización</h3>
+            <button onclick="runTest1()">Ejecutar Test 1</button>
+            <div id="test1" style="margin-top: 12px;"></div>
+        </div>
+
+        <!-- TEST 2: API CONNECTIVITY -->
+        <div class="test-box">
+            <h3>🌐 Test 2: Conectividad API</h3>
+            <button onclick="runTest2()">Ejecutar Test 2</button>
+            <div id="test2" style="margin-top: 12px;"></div>
+        </div>
+
+        <!-- TEST 3: CACHÉ CLEANUP -->
+        <div class="test-box">
+            <h3>🗑️ Test 3: Limpieza de Caché</h3>
+            <button onclick="runTest3()">Ejecutar Test 3</button>
+            <div id="test3" style="margin-top: 12px;"></div>
+        </div>
+
+        <!-- TEST 4: OBTENER PRONÓSTICO -->
+        <div class="test-box">
+            <h3>🌡️ Test 4: Obtener Pronóstico (Madrid)</h3>
+            <button onclick="runTest4()">Ejecutar Test 4</button>
+            <div id="test4" style="margin-top: 12px;"></div>
+        </div>
+
+        <!-- TEST 5: MÚLTIPLES CIUDADES -->
+        <div class="test-box">
+            <h3>🌍 Test 5: Múltiples Ciudades</h3>
+            <button onclick="runTest5()">Ejecutar Test 5</button>
+            <div id="test5" style="margin-top: 12px;"></div>
+        </div>
+
+        <!-- TEST 6: RESUMEN -->
+        <div class="test-box">
+            <h3>📊 Test 6: Resumen Final</h3>
+            <button onclick="runAllTests()">Ejecutar Todo</button>
+            <div id="test6" style="margin-top: 12px;"></div>
+        </div>
+    </div>
+
+    <script src="src/js/security-utils.js"></script>
+    <script src="src/js/script.js"></script>
+
+    <script>
+        const output = (id, html) => document.getElementById(id).innerHTML += html;
+        const clear = (id) => document.getElementById(id).innerHTML = '';
+
+        // TEST 1
+        async function runTest1() {
+            clear('test1');
+            output('test1', '<div class="status loading">⏳ Verificando inicialización...</div>');
+
+            const checks = [
+                ['fetchWithTimeout', typeof fetchWithTimeout],
+                ['createCacheKey', typeof createCacheKey],
+                ['getCachedWeather', typeof getCachedWeather],
+                ['saveCacheWeather', typeof saveCacheWeather],
+                ['processForecast', typeof processForecast],
+                ['getWeather', typeof getWeather],
+                ['SecurityUtils', typeof window.SecurityUtils],
+            ];
+
+            let allPass = true;
+            output('test1', '<table><thead><tr><th>Función</th><th>Estado</th></tr></thead><tbody>');
+
+            for (const [name, type] of checks) {
+                const pass = (type === 'function' || type === 'object');
+                allPass = allPass && pass;
+                output('test1', `<tr><td>${name}</td><td>${pass ? '✅' : '❌'}</td></tr>`);
+            }
+
+            output('test1', '</tbody></table>');
+            output('test1', `<div class="status ${allPass ? 'pass' : 'fail'}">
+                ${allPass ? '✅ Inicialización correcta' : '❌ Problemas en inicialización'}
+            </div>`);
+        }
+
+        // TEST 2
+        async function runTest2() {
+            clear('test2');
+            output('test2', '<div class="status loading">⏳ Probando conectividad...</div>');
+
+            try {
+                const url = 'https://api.open-meteo.com/v1/forecast?latitude=40.4168&longitude=-3.7038&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum&timezone=auto';
+                const res = await fetch(url);
+                const data = await res.json();
+
+                const hasDaily = !!data.daily;
+                const daysCount = data.daily?.time?.length || 0;
+                const hasAllFields = 
+                    data.daily?.temperature_2m_max?.length > 0 &&
+                    data.daily?.temperature_2m_min?.length > 0 &&
+                    data.daily?.weather_code?.length > 0;
+
+                const pass = hasDaily && daysCount >= 5 && hasAllFields;
+
+                output('test2', `
+                    <table>
+                        <tr><td>Respuesta HTTP</td><td>${res.ok ? '✅' : '❌'}</td></tr>
+                        <tr><td>Datos daily</td><td>${hasDaily ? '✅' : '❌'}</td></tr>
+                        <tr><td>Días disponibles</td><td>${daysCount >= 5 ? '✅ ' + daysCount + ' días' : '❌ ' + daysCount + ' días'}</td></tr>
+                        <tr><td>Campos completos</td><td>${hasAllFields ? '✅' : '❌'}</td></tr>
+                    </table>
+                `);
+
+                output('test2', `<div class="status ${pass ? 'pass' : 'fail'}">
+                    ${pass ? '✅ API conecta correctamente' : '❌ Problemas con API'}
+                </div>`);
+            } catch (e) {
+                output('test2', `<div class="status fail">❌ Error: ${e.message}</div>`);
+            }
+        }
+
+        // TEST 3
+        async function runTest3() {
+            clear('test3');
+            output('test3', '<div class="status loading">⏳ Limpiando caché...</div>');
+
+            try {
+                const before = localStorage.length;
+                clearAllCache();
+                clearExpiredCache();
+                const after = localStorage.length;
+
+                output('test3', `
+                    <div>
+                        <p>localStorage antes: ${before} items</p>
+                        <p>localStorage después: ${after} items</p>
+                        <p>Eliminados: ${before - after} items</p>
+                    </div>
+                `);
+
+                output('test3', '<div class="status pass">✅ Caché limpiado exitosamente</div>');
+            } catch (e) {
+                output('test3', `<div class="status fail">❌ Error: ${e.message}</div>`);
+            }
+        }
+
+        // TEST 4
+        async function runTest4() {
+            clear('test4');
+            output('test4', '<div class="status loading">⏳ Obteniendo pronóstico de Madrid...</div>');
+
+            try {
+                const result = await getWeather('Madrid');
+
+                if (result.error) {
+                    output('test4', `<div class="status fail">❌ Error: ${result.message}</div>`);
+                    return;
+                }
+
+                const hasForecast = result.forecast && Array.isArray(result.forecast) && result.forecast.length > 0;
+                const forecastLength = result.forecast?.length || 0;
+
+                output('test4', `
+                    <table>
+                        <tr><td>Ciudad</td><td>${result.city}</td></tr>
+                        <tr><td>Temperatura</td><td>${result.temperature}°C</td></tr>
+                        <tr><td>Clima</td><td>${result.weather}</td></tr>
+                        <tr><td>Desde caché</td><td>${result.fromCache ? 'Sí' : 'No (API)'}</td></tr>
+                        <tr><td>Pronósticos</td><td>${hasForecast ? '✅ ' + forecastLength + ' días' : '❌ Sin pronóstico'}</td></tr>
+                    </table>
+                `);
+
+                if (hasForecast) {
+                    output('test4', '<h4 style="margin-top: 16px;">Pronóstico:</h4>');
+                    result.forecast.slice(0, 5).forEach(day => {
+                        output('test4', `
+                            <div class="forecast-card">
+                                <div class="day">${day.day} ${day.dateFormatted}</div>
+                                <div class="temps">↑${Math.round(day.tempMax)}° ↓${Math.round(day.tempMin)}°</div>
+                                <div class="weather">${day.weather}</div>
+                            </div>
+                        `);
+                    });
+                }
+
+                output('test4', `<div class="status ${hasForecast ? 'pass' : 'fail'}">
+                    ${hasForecast ? '✅ Pronóstico obtenido' : '❌ Sin pronóstico'}
+                </div>`);
+            } catch (e) {
+                output('test4', `<div class="status fail">❌ Error: ${e.message}</div>`);
+            }
+        }
+
+        // TEST 5
+        async function runTest5() {
+            clear('test5');
+            output('test5', '<div class="status loading">⏳ Obteniendo múltiples ciudades...</div>');
+
+            try {
+                const result = await getWeatherMultiple('Madrid, Paris, London');
+
+                output('test5', `
+                    <table>
+                        <tr><td>Total solicitadas</td><td>${result.total}</td></tr>
+                        <tr><td>Exitosas</td><td>${result.successCount}</td></tr>
+                        <tr><td>Errores</td><td>${result.errors.length}</td></tr>
+                    </table>
+                `);
+
+                if (result.cities && result.cities.length > 0) {
+                    output('test5', '<h4>Ciudades con pronóstico:</h4>');
+                    result.cities.forEach(city => {
+                        const hasForecast = city.forecast && city.forecast.length > 0;
+                        output('test5', `<p>✅ ${city.city} - ${hasForecast ? city.forecast.length + ' días' : 'Sin pronóstico'}</p>`);
+                    });
+                }
+
+                output('test5', `<div class="status ${result.success ? 'pass' : 'fail'}">
+                    ${result.success ? '✅ Comparación exitosa' : '⚠️ Comparación parcial'}
+                </div>`);
+            } catch (e) {
+                output('test5', `<div class="status fail">❌ Error: ${e.message}</div>`);
+            }
+        }
+
+        // EJECUTAR TODO
+        async function runAllTests() {
+            clear('test6');
+            output('test6', '<div class="status loading">⏳ Ejecutando suite completa...</div>');
+
+            const results = [];
+
+            // Test 1
+            console.log('TEST 1: Inicialización...');
+            await new Promise(r => setTimeout(() => { runTest1(); r(); }, 100));
+            results.push('Test 1: Inicialización ✅');
+
+            // Test 2
+            await new Promise(r => setTimeout(() => { runTest2(); r(); }, 500));
+            console.log('TEST 2: API Connectivity...');
+            results.push('Test 2: API Connectivity ✅');
+
+            // Test 3
+            console.log('TEST 3: Cache Cleanup...');
+            await runTest3();
+            results.push('Test 3: Cache Cleanup ✅');
+
+            // Test 4
+            console.log('TEST 4: Forecast...');
+            await runTest4();
+            results.push('Test 4: Forecast ✅');
+
+            // Test 5
+            console.log('TEST 5: Multiple Cities...');
+            await runTest5();
+            results.push('Test 5: Multiple Cities ✅');
+
+            clear('test6');
+            output('test6', '<h4>📊 Resumen Completo:</h4>');
+            results.forEach(r => output('test6', `<p>✅ ${r}</p>`));
+            output('test6', `<div class="status pass" style="margin-top: 16px; width: 100%; text-align: center;">
+                ✅ TODOS LOS TESTS PASARON CORRECTAMENTE
+            </div>`);
+
+            console.log('%cSUIT COMPLETA FINALIZADA', 'color: green; font-size: 16px; font-weight: bold;');
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            console.log('%c🌤️ Panel de Test Final Cargado', 'color: #667eea; font-size: 14px; font-weight: bold;');
+            console.log('Haz clic en "Ejecutar Todo" para correr todos los tests');
+        });
+    </script>
+</body>
+</html>

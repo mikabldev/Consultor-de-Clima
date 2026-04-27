@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Debug - Consultor de Clima</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 { color: #4ec9b0; margin-top: 0; }
+        h2 { color: #569cd6; margin-top: 30px; }
+        .test-section {
+            background: #252526;
+            border-left: 4px solid #569cd6;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+        .success { color: #6a9955; background: #1e3a1f; padding: 8px; border-radius: 4px; margin: 8px 0; }
+        .error { color: #f48771; background: #3f1f1f; padding: 8px; border-radius: 4px; margin: 8px 0; }
+        .info { color: #9cdcfe; background: #1f2d3f; padding: 8px; border-radius: 4px; margin: 8px 0; }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 8px 4px 8px 0;
+            font-family: monospace;
+        }
+        button:hover { background: #1177bb; }
+        pre {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <h1>🔍 Panel de Debug - Consultor de Clima</h1>
+    <p>Esta página prueba que todos los scripts están cargados correctamente.</p>
+
+    <!-- TEST 1: CARGAS DE SCRIPTS -->
+    <div class="test-section">
+        <h2>📦 Test 1: Carga de Scripts</h2>
+        <button onclick="testScriptLoading()">Probar Carga</button>
+        <button onclick="testSecurityUtils()">Probar SecurityUtils</button>
+        <div id="test1-output"></div>
+    </div>
+
+    <!-- TEST 2: FUNCIONES PRINCIPALES -->
+    <div class="test-section">
+        <h2>⚙️ Test 2: Funciones Principales</h2>
+        <div class="grid-2">
+            <div>
+                <h3>Funciones de Cache</h3>
+                <button onclick="testCacheFunctions()">Probar Caché</button>
+            </div>
+            <div>
+                <h3>Funciones de Seguridad</h3>
+                <button onclick="testSecurityFunctions()">Probar Seguridad</button>
+            </div>
+        </div>
+        <div id="test2-output"></div>
+    </div>
+
+    <!-- TEST 3: APIs -->
+    <div class="test-section">
+        <h2>🌐 Test 3: Conectividad a APIs</h2>
+        <button onclick="testAPIConnectivity()">Probar APIs</button>
+        <div id="test3-output"></div>
+    </div>
+
+    <!-- TEST 4: FUNCIONES DE CLIMA -->
+    <div class="test-section">
+        <h2>🌡️ Test 4: Funciones de Clima</h2>
+        <input type="text" id="cityInput" placeholder="Ingresa una ciudad (ej: Madrid)" value="Madrid" style="padding: 8px; width: 300px; max-width: 100%;">
+        <button onclick="testWeatherFunction()">Buscar Clima</button>
+        <div id="test4-output"></div>
+    </div>
+
+    <!-- TEST 5: LOCALSTORAGE -->
+    <div class="test-section">
+        <h2>💾 Test 5: Almacenamiento Local</h2>
+        <button onclick="testLocalStorage()">Probar localStorage</button>
+        <button onclick="clearAllStorage()">🗑️ Limpiar Todo</button>
+        <div id="test5-output"></div>
+    </div>
+
+    <!-- TEST 6: RATE LIMITER -->
+    <div class="test-section">
+        <h2>⏱️ Test 6: Rate Limiter</h2>
+        <button onclick="testRateLimiter()">Probar Rate Limiter</button>
+        <div id="test6-output"></div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="src/js/security-utils.js"></script>
+    <script src="src/js/script.js"></script>
+
+    <script>
+        const output = (elementId, message, type = 'info') => {
+            const el = document.getElementById(elementId);
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `[${type.toUpperCase()}] ${message}`;
+            el.appendChild(div);
+            console.log(`${type.toUpperCase()}: ${message}`);
+        };
+
+        const clearOutput = (elementId) => {
+            document.getElementById(elementId).innerHTML = '';
+        };
+
+        // TEST 1
+        function testScriptLoading() {
+            clearOutput('test1-output');
+            try {
+                const checks = [
+                    ['fetchWithTimeout', typeof fetchWithTimeout],
+                    ['createCacheKey', typeof createCacheKey],
+                    ['SecurityUtils', typeof window.SecurityUtils],
+                    ['SecurityUtils.sanitizeHTML', typeof window.SecurityUtils.sanitizeHTML],
+                    ['SecurityUtils.apiRateLimiter', typeof window.SecurityUtils.apiRateLimiter],
+                    ['getWeather', typeof getWeather],
+                    ['getWeatherMultiple', typeof getWeatherMultiple],
+                ];
+
+                let allOk = true;
+                checks.forEach(([name, type]) => {
+                    if (type === 'function' || type === 'object') {
+                        output('test1-output', `✓ ${name} cargado correctamente`, 'success');
+                    } else {
+                        output('test1-output', `✗ ${name} NO está disponible (${type})`, 'error');
+                        allOk = false;
+                    }
+                });
+
+                if (allOk) {
+                    output('test1-output', '✓ TODOS LOS SCRIPTS CARGADOS CORRECTAMENTE', 'success');
+                } else {
+                    output('test1-output', '✗ FALTA CARGAR ALGUNOS SCRIPTS', 'error');
+                }
+            } catch (e) {
+                output('test1-output', `✗ Error: ${e.message}`, 'error');
+            }
+        }
+
+        function testSecurityUtils() {
+            clearOutput('test1-output');
+            try {
+                const testHTML = '<script>alert("XSS")</script>';
+                const sanitized = window.SecurityUtils.sanitizeHTML(testHTML);
+                output('test1-output', `Sanitización: "${testHTML}" → "${sanitized}"`, 'info');
+                
+                const validCities = ['Madrid', 'Buenos Aires', 'Tokyo', 'Génova'];
+                validCities.forEach(city => {
+                    if (window.SecurityUtils.validateCityName(city)) {
+                        output('test1-output', `✓ "${city}" es válido`, 'success');
+                    } else {
+                        output('test1-output', `✗ "${city}" es inválido`, 'error');
+                    }
+                });
+
+                output('test1-output', `Rate Limiter: ${window.SecurityUtils.apiRateLimiter.maxRequests} req/${window.SecurityUtils.apiRateLimiter.windowMs}ms`, 'info');
+            } catch (e) {
+                output('test1-output', `✗ Error: ${e.message}`, 'error');
+            }
+        }
+
+        // TEST 2
+        function testCacheFunctions() {
+            clearOutput('test2-output');
+            try {
+                const testCity = 'Test_City_' + Date.now();
+                const testData = { city: testCity, temp: 25, weather: 'Nublado' };
+                
+                saveCacheWeather(testCity, testData);
+                output('test2-output', '✓ Datos guardados en caché', 'success');
+                
+                const retrieved = getCachedWeather(testCity);
+                if (retrieved && retrieved.weather === 'Nublado') {
+                    output('test2-output', '✓ Datos recuperados correctamente del caché', 'success');
+                } else {
+                    output('test2-output', '✗ No se recuperaron datos del caché', 'error');
+                }
+            } catch (e) {
+                output('test2-output', `✗ Error: ${e.message}`, 'error');
+            }
+        }
+
+        function testSecurityFunctions() {
+            clearOutput('test2-output');
+            try {
+                const testString = '<img src=x onerror="alert(1)">';
+                const sanitized = window.SecurityUtils.sanitizeHTML(testString);
+                output('test2-output', `✓ HTML sanitizado: "${sanitized}"`, 'success');
+                
+                output('test2-output', `✓ isSecureConnection: ${window.SecurityUtils.isSecureConnection()}`, 'info');
+                output('test2-output', `✓ isValidURL: ${window.SecurityUtils.isValidURL('https://api.open-meteo.com')}`, 'info');
+            } catch (e) {
+                output('test2-output', `✗ Error: ${e.message}`, 'error');
+            }
+        }
+
+        // TEST 3
+        async function testAPIConnectivity() {
+            clearOutput('test3-output');
+            output('test3-output', 'Conectando a Open-Meteo APIs...', 'info');
+            
+            try {
+                // Prueba Geocoding API
+                const geoUrl = 'https://geocoding-api.open-meteo.com/v1/search?name=Madrid&count=1';
+                const geoRes = await fetch(geoUrl);
+                if (geoRes.ok) {
+                    output('test3-output', '✓ Geocoding API: Conectado', 'success');
+                } else {
+                    output('test3-output', `✗ Geocoding API: HTTP ${geoRes.status}`, 'error');
+                }
+
+                // Prueba Weather API
+                const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=40.4168&longitude=-3.7038&current=temperature_2m';
+                const weatherRes = await fetch(weatherUrl);
+                if (weatherRes.ok) {
+                    output('test3-output', '✓ Weather API: Conectado', 'success');
+                } else {
+                    output('test3-output', `✗ Weather API: HTTP ${weatherRes.status}`, 'error');
+                }
+            } catch (e) {
+                output('test3-output', `✗ Error de conectividad: ${e.message}`, 'error');
+            }
+        }
+
+        // TEST 4
+        async function testWeatherFunction() {
+            clearOutput('test4-output');
+            const city = document.getElementById('cityInput').value;
+            
+            if (!city) {
+                output('test4-output', 'Ingresa un nombre de ciudad', 'error');
+                return;
+            }
+
+            output('test4-output', `Buscando clima para: ${city}...`, 'info');
+            
+            try {
+                const data = await getWeather(city);
+                if (!data.error) {
+                    output('test4-output', `✓ ${data.city}: ${data.temperature}°C`, 'success');
+                    output('test4-output', `   Clima: ${data.weather}`, 'info');
+                    output('test4-output', `   Humedad: ${data.humidity}%`, 'info');
+                    output('test4-output', `   Desde caché: ${data.fromCache ? 'Sí' : 'No (API)'}`, 'info');
+                    if (data.forecast && data.forecast.length > 0) {
+                        output('test4-output', `✓ Pronóstico: ${data.forecast.length} días disponibles`, 'success');
+                    }
+                } else {
+                    output('test4-output', `✗ Error: ${data.message}`, 'error');
+                }
+            } catch (e) {
+                output('test4-output', `✗ Error: ${e.message}`, 'error');
+            }
+        }
+
+        // TEST 5
+        function testLocalStorage() {
+            clearOutput('test5-output');
+            try {
+                const history = getSearchHistory();
+                output('test5-output', `Historial guardado: ${history.length} ciudades`, 'info');
+                history.slice(0, 5).forEach(city => {
+                    output('test5-output', `  • ${city}`, 'info');
+                });
+
+                // Contar caché
+                let cacheCount = 0;
+                for (let i = 0; i < localStorage.length; i++) {
+                    if (localStorage.key(i).startsWith('weather_cache_')) {
+                        cacheCount++;
+                    }
+                }
+                output('test5-output', `Cache de clima: ${cacheCount} ciudades`, 'info');
+                output('test5-output', `localStorage total: ${localStorage.length} items`, 'info');
+            } catch (e) {
+                output('test5-output', `✗ Error: ${e.message}`, 'error');
+            }
+        }
+
+        function clearAllStorage() {
+            if (confirm('¿Limpiar todo localStorage?')) {
+                localStorage.clear();
+                clearOutput('test5-output');
+                output('test5-output', '✓ localStorage limpiado', 'success');
+            }
+        }
+
+        // TEST 6
+        function testRateLimiter() {
+            clearOutput('test6-output');
+            try {
+                const limiter = window.SecurityUtils.apiRateLimiter;
+                output('test6-output', `Límite: ${limiter.maxRequests} requests por ${limiter.windowMs}ms`, 'info');
+                
+                // Simular múltiples requests
+                for (let i = 0; i < 5; i++) {
+                    if (limiter.isAllowed()) {
+                        const status = limiter.getStatus();
+                        output('test6-output', `Request ${i + 1}: ✓ Permitida (${status.remaining} restantes)`, 'success');
+                    } else {
+                        output('test6-output', `Request ${i + 1}: ✗ Bloqueada (límite alcanzado)`, 'error');
+                    }
+                }
+            } catch (e) {
+                output('test6-output', `✗ Error: ${e.message}`, 'error');
+            }
+        }
+
+        // Auto-run test on load
+        window.addEventListener('load', () => {
+            output('test1-output', 'Página cargada. Ejecuta los tests...', 'info');
+        });
+    </script>
+</body>
+</html>

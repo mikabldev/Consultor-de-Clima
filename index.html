@@ -740,8 +740,8 @@
         </div>
     </div>
 
-    <script src="security-utils.js"></script>
-    <script src="script.js"></script>
+    <script src="src/js/security-utils.js"></script>
+    <script src="src/js/script.js"></script>
     <script>
         // ============================================
         // UI LOGIC - FASES 4, 5, 6
@@ -832,23 +832,24 @@
             const cacheLabel = data.fromCache ? '💾 Desde caché' : '';
 
             let forecastHTML = '';
-            if (data.forecast && data.forecast.length > 0) {
+            
+            // Validar y renderizar pronóstico
+            if (data.forecast && Array.isArray(data.forecast) && data.forecast.length > 0) {
+                console.log(`📅 Renderizando ${data.forecast.length} días de pronóstico`);
+                // Usar un contenedor temporal para forecast
                 forecastHTML = `
                     <div class="forecast-section">
-                        <div class="forecast-title">📅 Pronóstico de los próximos 5 Días</div>
-                        <div class="forecast-scroll">
-                            ${data.forecast.map(day => `
-                                <div class="forecast-day">
-                                    <div class="forecast-day-name">${SecurityUtils.sanitizeHTML(day.day)}</div>
-                                    <div class="forecast-day-date">${SecurityUtils.sanitizeHTML(day.dateFormatted)}</div>
-                                    <div class="forecast-temps">
-                                        <div class="forecast-max">↑${Math.round(day.tempMax)}°</div>
-                                        <div class="forecast-min">↓${Math.round(day.tempMin)}°</div>
-                                    </div>
-                                    <div class="forecast-weather">${SecurityUtils.sanitizeHTML(day.weather)}</div>
-                                    ${day.precipitation > 0 ? `<div class="forecast-rain">🌧️ ${day.precipitation}mm</div>` : ''}
-                                </div>
-                            `).join('')}
+                        <div class="forecast-title">📅 Pronóstico de los próximos ${data.forecast.length} Días</div>
+                        <div class="forecast-scroll" id="forecastScroll"></div>
+                    </div>
+                `;
+            } else {
+                console.warn("⚠️ Sin datos de pronóstico para mostrar");
+                forecastHTML = `
+                    <div class="forecast-section">
+                        <div class="forecast-title">📅 Pronóstico</div>
+                        <div class="empty-state" style="padding: 20px;">
+                            <div style="color: #999;">No hay datos de pronóstico disponibles</div>
                         </div>
                     </div>
                 `;
@@ -888,6 +889,30 @@
             `;
 
             container.innerHTML = html;
+
+            // Si hay pronóstico, renderizar usando fragmento DOM para eficiencia
+            if (data.forecast && Array.isArray(data.forecast) && data.forecast.length > 0) {
+                const forecastScroll = container.querySelector('#forecastScroll');
+                if (forecastScroll) {
+                    const fragment = document.createDocumentFragment();
+                    data.forecast.forEach(day => {
+                        const dayDiv = document.createElement('div');
+                        dayDiv.className = 'forecast-day';
+                        dayDiv.innerHTML = `
+                            <div class="forecast-day-name">${SecurityUtils.sanitizeHTML(day.day)}</div>
+                            <div class="forecast-day-date">${SecurityUtils.sanitizeHTML(day.dateFormatted)}</div>
+                            <div class="forecast-temps">
+                                <div class="forecast-max">↑${Math.round(day.tempMax)}°</div>
+                                <div class="forecast-min">↓${Math.round(day.tempMin)}°</div>
+                            </div>
+                            <div class="forecast-weather">${SecurityUtils.sanitizeHTML(day.weather)}</div>
+                            ${day.precipitation && day.precipitation > 0 ? `<div class="forecast-rain">🌧️ ${day.precipitation}mm</div>` : ''}
+                        `;
+                        fragment.appendChild(dayDiv);
+                    });
+                    forecastScroll.appendChild(fragment);
+                }
+            }
         }
 
         function getWeatherType(code) {

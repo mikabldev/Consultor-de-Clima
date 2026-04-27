@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Debug Pronóstico - Consultor de Clima</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 { color: #4ec9b0; }
+        h2 { color: #569cd6; margin-top: 30px; }
+        .test-section {
+            background: #252526;
+            border-left: 4px solid #569cd6;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+        .success { color: #6a9955; background: #1e3a1f; padding: 8px; border-radius: 4px; margin: 8px 0; }
+        .error { color: #f48771; background: #3f1f1f; padding: 8px; border-radius: 4px; margin: 8px 0; }
+        .info { color: #9cdcfe; background: #1f2d3f; padding: 8px; border-radius: 4px; margin: 8px 0; }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 8px 4px 8px 0;
+            font-family: monospace;
+        }
+        button:hover { background: #1177bb; }
+        pre {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 11px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        input {
+            padding: 8px;
+            width: 300px;
+            max-width: 100%;
+            margin-right: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        th, td {
+            border: 1px solid #3e3e42;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #2d2d30;
+            color: #569cd6;
+        }
+        tr:hover {
+            background: #2d2d30;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Pronóstico de 5 Días</h1>
+    <p>Panel para diagnosticar el problema con los pronósticos</p>
+
+    <div class="test-section">
+        <h2>🌍 Test 1: Respuesta Bruta de API</h2>
+        <input type="text" id="cityInput1" placeholder="Ciudad (ej: Madrid)" value="Madrid">
+        <button onclick="testRawAPI()">Obtener Respuesta Bruta</button>
+        <pre id="output1"></pre>
+    </div>
+
+    <div class="test-section">
+        <h2>🔄 Test 2: Procesamiento de Pronóstico</h2>
+        <input type="text" id="cityInput2" placeholder="Ciudad (ej: Madrid)" value="Madrid">
+        <button onclick="testProcessing()">Procesar Pronóstico</button>
+        <div id="output2"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Test 3: Comparar Datos Esperados vs Reales</h2>
+        <button onclick="testComparison()">Ejecutar Comparación</button>
+        <pre id="output3"></pre>
+    </div>
+
+    <div class="test-section">
+        <h2>🏙️ Test 4: Prueba Completa de getWeather()</h2>
+        <input type="text" id="cityInput4" placeholder="Ciudad (ej: Madrid)" value="Madrid">
+        <button onclick="testFullFunction()">Ejecutar getWeather()</button>
+        <pre id="output4"></pre>
+    </div>
+
+    <script src="src/js/security-utils.js"></script>
+    <script src="src/js/script.js"></script>
+
+    <script>
+        const log = (output, text, type = 'info') => {
+            const el = document.getElementById(output);
+            if (el.textContent) el.textContent += '\n';
+            el.textContent += `[${type.toUpperCase()}] ${text}`;
+        };
+
+        const logJSON = (output, obj) => {
+            const el = document.getElementById(output);
+            el.textContent = JSON.stringify(obj, null, 2);
+        };
+
+        // TEST 1: Respuesta bruta
+        async function testRawAPI() {
+            const city = document.getElementById('cityInput1').value || 'Madrid';
+            document.getElementById('output1').textContent = 'Obteniendo coordenadas...';
+
+            try {
+                // Paso 1: Geocoding
+                const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=es`;
+                const geoRes = await fetch(geoUrl);
+                const geoData = await geoRes.json();
+
+                if (!geoData.results || geoData.results.length === 0) {
+                    document.getElementById('output1').textContent = 'Error: Ciudad no encontrada';
+                    return;
+                }
+
+                const { latitude, longitude, name, country } = geoData.results[0];
+                document.getElementById('output1').textContent = `Ciudad: ${name}, ${country}\nLatitud: ${latitude}\nLongitud: ${longitude}\n\n`;
+                document.getElementById('output1').textContent += 'Obteniendo datos de clima...\n';
+
+                // Paso 2: Weather API
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum&timezone=auto`;
+                
+                document.getElementById('output1').textContent += `\nURL de solicitud:\n${weatherUrl}\n\n`;
+
+                const weatherRes = await fetch(weatherUrl);
+                const weatherData = await weatherRes.json();
+
+                document.getElementById('output1').textContent += '=== RESPUESTA COMPLETA ===\n';
+                logJSON('output1', weatherData);
+
+                // Verificar estructura
+                document.getElementById('output1').textContent += '\n\n=== VERIFICACIÓN ===\n';
+                log('output1', `Current data exists: ${!!weatherData.current}`, 'info');
+                log('output1', `Daily data exists: ${!!weatherData.daily}`, 'info');
+                
+                if (weatherData.daily) {
+                    log('output1', `Daily.time length: ${weatherData.daily.time?.length}`, 'info');
+                    log('output1', `Daily.temperature_2m_max length: ${weatherData.daily.temperature_2m_max?.length}`, 'info');
+                    log('output1', `Daily.temperature_2m_min length: ${weatherData.daily.temperature_2m_min?.length}`, 'info');
+                    log('output1', `Daily.weather_code length: ${weatherData.daily.weather_code?.length}`, 'info');
+                    log('output1', `Daily.precipitation_sum length: ${weatherData.daily.precipitation_sum?.length}`, 'info');
+                    
+                    log('output1', `\nPrimeros 5 días:`, 'info');
+                    for (let i = 0; i < Math.min(5, weatherData.daily.time.length); i++) {
+                        log('output1', `[${i}] ${weatherData.daily.time[i]}: ${weatherData.daily.temperature_2m_max[i]}°/${weatherData.daily.temperature_2m_min[i]}° - Código: ${weatherData.daily.weather_code[i]}`, 'info');
+                    }
+                }
+            } catch (e) {
+                log('output1', `Error: ${e.message}`, 'error');
+            }
+        }
+
+        // TEST 2: Procesamiento
+        async function testProcessing() {
+            const city = document.getElementById('cityInput2').value || 'Madrid';
+            document.getElementById('output2').innerHTML = '<div class="info">Procesando...</div>';
+
+            try {
+                // Obtener datos
+                const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=es`;
+                const geoRes = await fetch(geoUrl);
+                const geoData = await geoRes.json();
+
+                if (!geoData.results || geoData.results.length === 0) {
+                    document.getElementById('output2').innerHTML = '<div class="error">Ciudad no encontrada</div>';
+                    return;
+                }
+
+                const { latitude, longitude, timezone } = geoData.results[0];
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum&timezone=auto`;
+
+                const weatherRes = await fetch(weatherUrl);
+                const weatherData = await weatherRes.json();
+
+                // Procesar pronóstico
+                let html = '<div class="info">✓ Datos recibidos correctamente</div>';
+
+                if (!weatherData.daily) {
+                    html += '<div class="error">✗ No hay datos daily en respuesta</div>';
+                } else if (!weatherData.daily.time) {
+                    html += '<div class="error">✗ No hay time en daily</div>';
+                } else {
+                    html += `<div class="success">✓ Daily tiene ${weatherData.daily.time.length} días</div>`;
+                    
+                    // Simular processForecast
+                    const forecast = [];
+                    const numDays = Math.min(5, weatherData.daily.time.length);
+                    
+                    html += `<table>
+                        <thead>
+                            <tr>
+                                <th>Índice</th>
+                                <th>Fecha</th>
+                                <th>Día</th>
+                                <th>Temp Máx</th>
+                                <th>Temp Mín</th>
+                                <th>Precipitación</th>
+                                <th>Código Clima</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                    
+                    for (let i = 0; i < numDays; i++) {
+                        const date = new Date(weatherData.daily.time[i]);
+                        const dayName = date.toLocaleDateString('es-ES', { weekday: 'short' });
+                        const dateStr = date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+                        const tempMax = weatherData.daily.temperature_2m_max[i];
+                        const tempMin = weatherData.daily.temperature_2m_min[i];
+                        const precip = weatherData.daily.precipitation_sum[i];
+                        const weatherCode = weatherData.daily.weather_code[i];
+                        
+                        html += `<tr>
+                            <td>${i}</td>
+                            <td>${weatherData.daily.time[i]}</td>
+                            <td>${dayName} (${dateStr})</td>
+                            <td>${tempMax}°C</td>
+                            <td>${tempMin}°C</td>
+                            <td>${precip}mm</td>
+                            <td>${weatherCode}</td>
+                        </tr>`;
+                    }
+                    
+                    html += '</tbody></table>';
+                }
+
+                document.getElementById('output2').innerHTML = html;
+            } catch (e) {
+                document.getElementById('output2').innerHTML = `<div class="error">Error: ${e.message}</div>`;
+            }
+        }
+
+        // TEST 3: Comparación
+        async function testComparison() {
+            document.getElementById('output3').textContent = 'Analizando estructura esperada vs real...\n\n';
+
+            const expected = `
+ESTRUCTURA ESPERADA:
+{
+  "daily": {
+    "time": ["2026-04-25", "2026-04-26", ...],
+    "temperature_2m_max": [25.5, 26.3, ...],
+    "temperature_2m_min": [18.2, 19.1, ...],
+    "weather_code": [0, 1, ...],
+    "precipitation_sum": [0, 0.5, ...]
+  },
+  "current": {
+    "temperature_2m": 22.5,
+    "weather_code": 0,
+    "relative_humidity_2m": 65,
+    "wind_speed_10m": 8.5
+  }
+}
+            `;
+
+            document.getElementById('output3').textContent += expected + '\n\n';
+            document.getElementById('output3').textContent += 'PARÁMETROS REQUERIDOS EN URL:\n';
+            document.getElementById('output3').textContent += '&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum\n';
+            document.getElementById('output3').textContent += '&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m\n';
+            document.getElementById('output3').textContent += '&timezone=auto\n\n';
+
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=40.4168&longitude=-3.7038&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum&timezone=auto`;
+            document.getElementById('output3').textContent += 'Obteniendo respuesta real...\n';
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                document.getElementById('output3').textContent += '\nVERIFICACION:\n';
+                document.getElementById('output3').textContent += `✓ daily.time: ${data.daily?.time?.length} elementos\n`;
+                document.getElementById('output3').textContent += `✓ daily.temperature_2m_max: ${data.daily?.temperature_2m_max?.length} elementos\n`;
+                document.getElementById('output3').textContent += `✓ daily.temperature_2m_min: ${data.daily?.temperature_2m_min?.length} elementos\n`;
+                document.getElementById('output3').textContent += `✓ daily.weather_code: ${data.daily?.weather_code?.length} elementos\n`;
+                document.getElementById('output3').textContent += `✓ daily.precipitation_sum: ${data.daily?.precipitation_sum?.length} elementos\n`;
+                
+                if (data.daily.time.length >= 5) {
+                    document.getElementById('output3').textContent += '\n✓ ESTRUCTURA CORRECTA - Se obtienen al menos 5 días\n';
+                } else {
+                    document.getElementById('output3').textContent += '\n✗ PROBLEMA: Menos de 5 días de pronóstico\n';
+                }
+            } catch (e) {
+                document.getElementById('output3').textContent += `\nError: ${e.message}\n`;
+            }
+        }
+
+        // TEST 4: Función completa
+        async function testFullFunction() {
+            const city = document.getElementById('cityInput4').value || 'Madrid';
+            document.getElementById('output4').textContent = `Ejecutando getWeather("${city}")...\n\n`;
+
+            try {
+                const result = await getWeather(city);
+                
+                if (result.error) {
+                    document.getElementById('output4').textContent += `✗ ERROR: ${result.message}\n`;
+                } else {
+                    document.getElementById('output4').textContent += `✓ Ciudad: ${result.city}\n`;
+                    document.getElementById('output4').textContent += `✓ Temperatura: ${result.temperature}°C\n`;
+                    document.getElementById('output4').textContent += `✓ Clima: ${result.weather}\n`;
+                    document.getElementById('output4').textContent += `✓ Desde caché: ${result.fromCache}\n\n`;
+                    
+                    document.getElementById('output4').textContent += `📅 PRONÓSTICO:\n`;
+                    
+                    if (!result.forecast) {
+                        document.getElementById('output4').textContent += `✗ forecast es undefined\n`;
+                    } else if (result.forecast.length === 0) {
+                        document.getElementById('output4').textContent += `✗ forecast está vacío (length = 0)\n`;
+                    } else {
+                        document.getElementById('output4').textContent += `✓ Pronóstico: ${result.forecast.length} días\n\n`;
+                        
+                        result.forecast.forEach((day, i) => {
+                            document.getElementById('output4').textContent += 
+                                `[${i}] ${day.day} ${day.dateFormatted}: ${day.tempMin}°/${day.tempMax}° - ${day.weather}\n`;
+                        });
+                    }
+                    
+                    document.getElementById('output4').textContent += '\n=== OBJETO COMPLETO ===\n';
+                    document.getElementById('output4').textContent += JSON.stringify(result, null, 2);
+                }
+            } catch (e) {
+                document.getElementById('output4').textContent += `Excepción: ${e.message}\n`;
+            }
+        }
+
+        // Auto-run comparison on load
+        window.addEventListener('load', () => {
+            console.log('Panel de debug de pronósticos cargado');
+        });
+    </script>
+</body>
+</html>

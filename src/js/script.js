@@ -55,7 +55,14 @@ function getCachedWeather(city) {
             return null;
         }
         
-        console.log(`✓ Caché hit para "${city}" - Datos frescos`);
+        // Validar que tenga pronóstico (datos antiguos podrían no tenerlo)
+        if (!data.data.forecast || !Array.isArray(data.data.forecast)) {
+            console.warn(`⚠️ Caché de "${city}" no tiene pronóstico válido - descartando`);
+            localStorage.removeItem(key);
+            return null;
+        }
+        
+        console.log(`✓ Caché hit para "${city}" - Datos frescos con pronóstico`);
         return data.data;
     } catch (error) {
         console.warn(`Error al leer caché: ${error.message}`);
@@ -90,25 +97,43 @@ function saveCacheWeather(city, data) {
 /**
  * Limpia entradas expiradas del caché (expiración pasiva en acceso, no proactiva)
  * Se llama automáticamente cuando se accede a valores
+ * MEJORADO: También elimina datos cacheados sin pronóstico
  */
 function clearExpiredCache() {
     try {
         const now = Date.now();
         let cleared = 0;
+        let invalidated = 0;
         
         for (let i = localStorage.length - 1; i >= 0; i--) {
             const key = localStorage.key(i);
-            if (key.startsWith('weather_cache_')) {
-                const cached = JSON.parse(localStorage.getItem(key));
-                if (now > cached.expiresAt) {
+            if (key && key.startsWith('weather_cache_')) {
+                try {
+                    const cached = JSON.parse(localStorage.getItem(key));
+                    
+                    // Limpiar si expiró
+                    if (now > cached.expiresAt) {
+                        localStorage.removeItem(key);
+                        cleared++;
+                    }
+                    // Limpiar si no tiene pronóstico válido (datos obsoletos)
+                    else if (!cached.data?.forecast || !Array.isArray(cached.data.forecast)) {
+                        console.warn(`🗑️ Eliminando caché obsoleto: ${key} (sin pronóstico)`);
+                        localStorage.removeItem(key);
+                        invalidated++;
+                    }
+                } catch (e) {
+                    console.warn(`Error procesando ${key}: ${e.message}`);
                     localStorage.removeItem(key);
-                    cleared++;
                 }
             }
         }
         
         if (cleared > 0) {
             console.log(`✓ ${cleared} entradas de caché expiradas eliminadas`);
+        }
+        if (invalidated > 0) {
+            console.log(`✓ ${invalidated} entradas de caché obsoletas eliminadas`);
         }
     } catch (error) {
         console.warn(`Error al limpiar caché: ${error.message}`);
@@ -247,10 +272,15 @@ async function getWeather(city) {
             weatherCode: weatherCode,
             coordinates: { latitude, longitude },
             timezone: timezone,
-            forecast: forecast,
+            forecast: forecast && Array.isArray(forecast) ? forecast : [], // Garantizar array
             timestamp: new Date().toLocaleString('es-ES'),
             fromCache: false
         };
+
+        // Validar que forecast tenga datos
+        if (!result.forecast || result.forecast.length === 0) {
+            console.warn("⚠️ Advertencia: No se obtuvieron datos de pronóstico");
+        }
 
         // Guardar en caché
         saveCacheWeather(cityTrimmed, result);
